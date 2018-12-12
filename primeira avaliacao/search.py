@@ -44,13 +44,20 @@ class Board(object):
         tiles é uma lista com as posições do tabuleiro, por exemplo,
         [1, 2, 3, 4, 5, 6, 7, 8, "x"].
         """
+        self.board = {'a':tiles[:3],
+                      'b':tiles[3:6],
+                      'c':tiles[6:]}
         self.tiles = tiles
+        self.temp = self.tiles.remove('x')
+        self.solution = sorted(self.tiles)
 
     def is_goal(self):
         # TODO: este método verifica se o tabuleiro atual é uma solução
         # do problema. O metódo deve retornar True se o tabuleiro for uma
         # solução e False se não for.
-        pass
+        if self.solution.remove('x') == self.temp:
+            return True
+        return False
 
     def heuristic(self):
         # TODO: este método calcula a função heurística para o estado
@@ -60,14 +67,48 @@ class Board(object):
         # [2, 1, 3, 4, 5, 6, 7, 8, "x"] tem valor 2 para heurística, pois
         # o número "1" está na posição errada e o número "2" também.
         # Este método deve retornar o valor da função heurística.
-        pass
+        count = 0
+        for i in range(len(self.solution)):
+            if self.temp[i] != self.solution[i]:
+                count+=1
+        return count
+
+    def procedures(self,i,y):
+    # Essa função tem como objetivo pegar todos os possiveis lados
+    # de um indice y
+    # de uma coluna i;
+        return[[i,y-1],[i,y+1],[i-1,y],[i+1,y]]
+    
+    def change_positions(self,board,neighbor):
+        temp_board = board.copy()
+        pos_neighbor = temp_board.index(neighbor)
+        pos_x = temp_board.index('x')
+        temp_board[pos_x]=neighbor
+        temp_board[pos_neighbor]='x'
+        b = Board(temp_board)
+        return b
+
+    def find_x(self):
+        for i in self.board:
+            for y in range(len(self.board[i])):
+                if self.board[i][y] == 'x':
+                    return[i,y]
 
     def get_neighbors(self):
         # TODO: Este método deve retornar uma lista com os vizinhos do estado
         # representado pelo tabuleiro. Os vizinhos são os possíveis novos
         # tabuleiros resultantes da movimentação das peças do tabuleiro atual.
         # A lista retornada é uma lista de objetos da classe Board.
-        pass
+        objects = []
+        x = self.find_x()
+        proced = self.procedures(x[0],x[1])
+        for i in proced:
+            try:
+                neighbor = self.board[i[0]][i[1]]
+                objects.append(self.change_positions(tiles,neighbor))
+            except:
+                pass
+        return objects
 
     
     # Os métodos a seguir dessa classe não devem ser modificados
@@ -140,7 +181,10 @@ class AStar(object):
     def choose_from_frontier(self):
         # TODO: Este método remove e retorna o nó com menor custo da
         # fronteira.
-        pass
+        cost = []
+        for node in self.frontier:
+            cost.append(node.cost)
+        return self.frontier.pop(cost.index(max(cost)))
 
     def update_frontier(self):
         # TODO: Este método é executado após ser escolhido um estado da
