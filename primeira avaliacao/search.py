@@ -44,18 +44,16 @@ class Board(object):
         tiles é uma lista com as posições do tabuleiro, por exemplo,
         [1, 2, 3, 4, 5, 6, 7, 8, "x"].
         """
-        self.board = {'a':tiles[:3],
-                      'b':tiles[3:6],
-                      'c':tiles[6:]}
-        self.tiles = tiles
-        self.temp = self.tiles.remove('x')
-        self.solution = sorted(self.tiles)
+        self.tiles = tiles.copy()
+        self.solution = self.sort(tiles)
+        self.board = [self.tiles[:3], self.tiles[3:6], self.tiles[6:]]
+        
 
     def is_goal(self):
         # TODO: este método verifica se o tabuleiro atual é uma solução
         # do problema. O metódo deve retornar True se o tabuleiro for uma
         # solução e False se não for.
-        if self.solution.remove('x') == self.temp:
+        if self.tiles == self.solution:
             return True
         return False
 
@@ -69,30 +67,43 @@ class Board(object):
         # Este método deve retornar o valor da função heurística.
         count = 0
         for i in range(len(self.solution)):
-            if self.temp[i] != self.solution[i]:
+            if self.tiles[i] != self.solution[i]:
                 count+=1
         return count
 
-    def procedures(self,i,y):
-    # Essa função tem como objetivo pegar todos os possiveis lados
-    # de um indice y
-    # de uma coluna i;
-        return[[i,y-1],[i,y+1],[i-1,y],[i+1,y]]
+    def sort(self,tiles):
+        temp = tiles.copy()
+        temp[temp.index('x')] = 0
+        temp[temp.index(0)] = max(temp)+1
+        temp.sort()
+        temp[temp.index(max(temp))] = 'x'
+        return temp
+
+    def coordinates(self,i,y):
+        coord = []
+        for i in range(4):
+            if i < 1:
+                coord.append((i,y-1))
+                coord.append((i,y+1))
+            else:
+                coord.append((i-1,y))
+                coord.append((i+1,y))
+        return coord
     
-    def change_positions(self,board,neighbor):
-        temp_board = board.copy()
-        pos_neighbor = temp_board.index(neighbor)
-        pos_x = temp_board.index('x')
-        temp_board[pos_x]=neighbor
-        temp_board[pos_neighbor]='x'
-        b = Board(temp_board)
+    def change_positions(self,neighbor):
+        temp_tiles = self.tiles.copy()
+        pos_neighbor = temp_tiles.index(neighbor)
+        pos_x = temp_tiles.index('x')
+        temp_tiles[pos_x]=neighbor
+        temp_tiles[pos_neighbor]='x'
+        b = Board(temp_tiles)
         return b
 
     def find_x(self):
-        for i in self.board:
+        for i in range(len(self.board)):
             for y in range(len(self.board[i])):
                 if self.board[i][y] == 'x':
-                    return[i,y]
+                    return (i,y)
 
     def get_neighbors(self):
         # TODO: Este método deve retornar uma lista com os vizinhos do estado
@@ -101,16 +112,16 @@ class Board(object):
         # A lista retornada é uma lista de objetos da classe Board.
         objects = []
         x = self.find_x()
-        proced = self.procedures(x[0],x[1])
-        for i in proced:
-            try:
-                neighbor = self.board[i[0]][i[1]]
-                objects.append(self.change_positions(tiles,neighbor))
-            except:
-                pass
+        proced = self.coordinates(x[0],x[1])
+        for x,y in proced:
+            if x != -1 and y != -1:
+                try:
+                    neighbor = self.board[x][y]
+                    objects.append(self.change_positions(neighbor))
+                except IndexError:
+                    pass
         return objects
 
-    
     # Os métodos a seguir dessa classe não devem ser modificados
     def __eq__(self, other):
         return self.tiles == other.tiles
@@ -177,14 +188,13 @@ class AStar(object):
         self.frontier = [Node(self.initial_state, 0 + self.initial_state.heuristic())]
         self.explored = set()
         self.current_node = None
+        self.last_node = None
 
     def choose_from_frontier(self):
         # TODO: Este método remove e retorna o nó com menor custo da
         # fronteira.
-        cost = []
-        for node in self.frontier:
-            cost.append(node.cost)
-        return self.frontier.pop(cost.index(max(cost)))
+        cost = [node.cost for node in self.frontier]
+        return self.frontier.pop(cost.index(min(cost)))
 
     def update_frontier(self):
         # TODO: Este método é executado após ser escolhido um estado da
@@ -199,7 +209,15 @@ class AStar(object):
         #
         # Este método não precisa retornar a fronteira, já que ela pode ser
         # acessada em toda classe através da variável self.frontier.
-        pass
+       
+        neighbors = self.current_node.state.get_neighbors()
+        # print(neighbors)
+        for neighbor in neighbors:
+            node = Node(neighbor, neighbor.heuristic())
+            if self.is_neighbor_in_frontier(node.state):
+                if not(node.state in self.explored):
+                    node.parent = self.current_node
+                    self.frontier.append(node)
 
     def is_neighbor_in_frontier(self, neighbor):
         """
@@ -208,9 +226,8 @@ class AStar(object):
         """
         for node in self.frontier:
             if node.state == neighbor:
-                return True
-        
-        return False
+                return False
+        return True
 
     def get_path(self, node):
         # TODO: Este método retorna o caminho feito do estado inicial até o
@@ -226,7 +243,12 @@ class AStar(object):
         # Passando o nó objetivo encontrado pela busca como parâmetro dessa
         # função, tem-se como resultado o caminho completo para sair do estado
         # inicial e chegar no objetivo.
-        pass
+        path = [node.state]
+        for i in self.initial_state.tiles:
+            path.append(node.parent.state)
+            node = node.parent
+        path.reverse()
+        return path
 
     def search(self):
         """
@@ -239,12 +261,13 @@ class AStar(object):
         while True:
             if len(self.frontier) == 0:
                 return False
-
+            
             self.current_node = self.choose_from_frontier()
 
             self.explored.add(self.current_node.state)
-
+            
             if self.current_node.state.is_goal():
+                print('True')
                 return self.current_node
 
             self.update_frontier()
@@ -268,11 +291,9 @@ if __name__ == "__main__":
     # Iniciando o quebra-cabeça com um tabuleiro fixo
     tiles = [3, 2, 8, 1, 5, 4, 7, 6, "x"]
     initial_state = Board(tiles)
-
     astar = AStar(initial_state)
     final_node = astar.search()
     path = astar.get_path(final_node)
-
     for state in path:
         state.print_board()
         print("---")
