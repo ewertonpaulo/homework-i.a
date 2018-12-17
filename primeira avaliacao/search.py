@@ -204,7 +204,6 @@ class AStar(object):
         self.frontier = [Node(self.initial_state, 0 + self.initial_state.heuristic())]
         self.explored = set()
         self.current_node = None
-        self.last_node = None
 
     def choose_from_frontier(self):
         # TODO: Este método remove e retorna o nó com menor custo da
@@ -302,7 +301,7 @@ if __name__ == "__main__":
     # random.shuffle(tiles)
     
     # Iniciando o quebra-cabeça com um tabuleiro fixo
-    tiles = [3, 2, 8, 1, 5, 4, 7, 6, "x"]
+    tiles = [3, 2, 8, 1, 5, 4, 'x', 7 , 6]
     initial_state = Board(tiles)
     astar = AStar(initial_state)
     final_node = astar.search()
