@@ -46,7 +46,7 @@ class Board(object):
         """
         self.tiles = tiles.copy()
         self.solution = self.sort(tiles)
-        self.board = [self.tiles[:3], self.tiles[3:6], self.tiles[6:]]
+        self.board = list(self.split(tiles))
         
 
     def is_goal(self):
@@ -70,6 +70,16 @@ class Board(object):
             if self.tiles[i] != self.solution[i]:
                 count+=1
         return count
+
+    def split(self, tiles):
+        temp = tiles.copy()
+        n = 1
+        for i in range(len(temp)):
+            if i*i == len(temp):
+                n = i
+        for i in range(0, len(temp), n):
+            yield temp[i:i + n]
+        return temp
 
     def sort(self,tiles):
         temp = tiles.copy()
@@ -136,9 +146,9 @@ class Board(object):
         return str(self.tiles)
 
     def print_board(self):
-        print(self.tiles[:3])
-        print(self.tiles[3:6])
-        print(self.tiles[6:])
+        temp = list(self.split(self.tiles.copy()))
+        for i in temp:
+            print(i)
 
 
 class Node(object):
@@ -209,13 +219,11 @@ class AStar(object):
         #
         # Este método não precisa retornar a fronteira, já que ela pode ser
         # acessada em toda classe através da variável self.frontier.
-       
         neighbors = self.current_node.state.get_neighbors()
-        # print(neighbors)
         for neighbor in neighbors:
             node = Node(neighbor, neighbor.heuristic())
             if self.is_neighbor_in_frontier(node.state):
-                if not(node.state in self.explored):
+                if node.state not in self.explored:
                     node.parent = self.current_node
                     self.frontier.append(node)
 
@@ -267,7 +275,6 @@ class AStar(object):
             self.explored.add(self.current_node.state)
             
             if self.current_node.state.is_goal():
-                print('True')
                 return self.current_node
 
             self.update_frontier()
