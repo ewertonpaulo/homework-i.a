@@ -72,6 +72,7 @@ class Board(object):
         return count
 
     def split(self, tiles):
+        # Dividir os tiles em uma matriz para melhor trabalhar as coordenadas.
         temp = tiles.copy()
         n = 1
         for i in range(len(temp)):
@@ -82,6 +83,7 @@ class Board(object):
         return temp
 
     def sort(self,tiles):
+        # Ordena o tiles para gerar a solução do puzzle de forma dinâmica
         temp = tiles.copy()
         temp[temp.index('x')] = 0
         temp[temp.index(0)] = max(temp)+1
@@ -90,6 +92,7 @@ class Board(object):
         return temp
 
     def coordinates(self,i,y):
+        # Retorna as cordenadas possíveis dos vizinhos de x de forma dinâmica
         coord = []
         for i in range(4):
             if i < 1:
@@ -101,6 +104,7 @@ class Board(object):
         return coord
     
     def change_positions(self,neighbor):
+        # Muda a posição do elemento.
         temp_tiles = self.tiles.copy()
         pos_neighbor = temp_tiles.index(neighbor)
         pos_x = temp_tiles.index('x')
@@ -110,6 +114,7 @@ class Board(object):
         return b
 
     def find_x(self):
+        # Encontra a posição de x na matriz.
         for i in range(len(self.board)):
             for y in range(len(self.board[i])):
                 if self.board[i][y] == 'x':
@@ -146,6 +151,7 @@ class Board(object):
         return str(self.tiles)
 
     def print_board(self):
+        #Printa o board de forma dinâmica aceitando qualquer proporção de matriz.
         temp = list(self.split(self.tiles.copy()))
         for i in temp:
             print(i)
